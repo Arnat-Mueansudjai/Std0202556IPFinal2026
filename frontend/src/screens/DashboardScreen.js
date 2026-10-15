@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   View,
   Text,
+  TextInput,
   StyleSheet,
   FlatList,
   TouchableOpacity,
@@ -35,6 +36,7 @@ export default function DashboardScreen() {
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   
   // Modals state
   const [addModalVisible, setAddModalVisible] = useState(false);
@@ -69,6 +71,17 @@ export default function DashboardScreen() {
   useEffect(() => {
     fetchEmployees();
   }, [fetchEmployees]);
+
+  // Live filter employees based on search query (Name or Position)
+  const filteredEmployees = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return employees;
+    return employees.filter(
+      (emp) =>
+        (emp.name && emp.name.toLowerCase().includes(query)) ||
+        (emp.position && emp.position.toLowerCase().includes(query))
+    );
+  }, [employees, searchQuery]);
 
   // Phase 1: Toggle Employee Status (Active <-> On Leave)
   const handleToggleStatus = async (id) => {
@@ -220,6 +233,33 @@ export default function DashboardScreen() {
             </TouchableOpacity>
           )}
         </View>
+
+        {/* Search Bar with Live Filter */}
+        <View style={styles.searchContainer}>
+          <Ionicons name="search-outline" size={18} color={colors.textMuted} style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search employee by name or position..."
+            placeholderTextColor={colors.textMuted}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={() => setSearchQuery("")} style={styles.clearSearchBtn}>
+              <Ionicons name="close-circle" size={18} color={colors.textMuted} />
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {searchQuery.trim().length > 0 && (
+          <View style={styles.searchResultBadge}>
+            <Text style={styles.searchResultText}>
+              Found {filteredEmployees.length} of {employees.length} employees matching "{searchQuery}"
+            </Text>
+          </View>
+        )}
       </View>
     );
   };
@@ -237,7 +277,7 @@ export default function DashboardScreen() {
           </View>
         ) : (
           <FlatList
-            data={employees}
+            data={filteredEmployees}
             keyExtractor={(item) => String(item.id)}
             renderItem={({ item }) => (
               <EmployeeCard
@@ -251,13 +291,25 @@ export default function DashboardScreen() {
             ListHeaderComponent={renderListHeader}
             ListEmptyComponent={
               <View style={styles.emptyContainer}>
-                <Ionicons name="folder-open-outline" size={48} color={colors.textMuted} />
-                <Text style={styles.emptyTitle}>No Employees Found</Text>
+                <Ionicons name="search-outline" size={48} color={colors.textMuted} />
+                <Text style={styles.emptyTitle}>
+                  {searchQuery ? "No Matching Employees" : "No Employees Found"}
+                </Text>
                 <Text style={styles.emptySubtitle}>
-                  {isStaff
+                  {searchQuery
+                    ? `No employee found matching "${searchQuery}". Try a different name or position.`
+                    : isStaff
                     ? "No employee records currently available."
                     : "Click the + Add Employee button above to add the first record."}
                 </Text>
+                {searchQuery.length > 0 && (
+                  <TouchableOpacity
+                    style={styles.resetSearchBtn}
+                    onPress={() => setSearchQuery("")}
+                  >
+                    <Text style={styles.resetSearchBtnText}>Clear Search</Text>
+                  </TouchableOpacity>
+                )}
               </View>
             }
             contentContainerStyle={styles.listContent}
@@ -376,6 +428,46 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "700"
   },
+  searchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.cardBg,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    marginBottom: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 2,
+    elevation: 1
+  },
+  searchIcon: {
+    marginRight: 8
+  },
+  searchInput: {
+    flex: 1,
+    paddingVertical: 11,
+    fontSize: 14,
+    color: colors.textPrimary
+  },
+  clearSearchBtn: {
+    padding: 6
+  },
+  searchResultBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    backgroundColor: colors.primaryLight,
+    borderRadius: 8,
+    alignSelf: "flex-start",
+    marginBottom: 10
+  },
+  searchResultText: {
+    fontSize: 12,
+    color: colors.primary,
+    fontWeight: "600"
+  },
   centerLoading: {
     flex: 1,
     justifyContent: "center",
@@ -402,6 +494,20 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     textAlign: "center",
     marginTop: 4,
-    maxWidth: 260
+    maxWidth: 280
+  },
+  resetSearchBtn: {
+    marginTop: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: "#F1F5F9",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.cardBorder
+  },
+  resetSearchBtnText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: colors.primary
   }
 });
