@@ -1,0 +1,19 @@
+{
+  "name": "hr-salary-analytics-backend",
+  "version": "1.0.0",
+  "description": "Backend API for HR Manager & Salary Analytics System - Internet Programming Final Exam 2026",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "keywords": ["express", "k-means", "hr-management", "final-exam"],
+  "author": "6730202556",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "mysql2": "^3.12.0"
+  }
+}
