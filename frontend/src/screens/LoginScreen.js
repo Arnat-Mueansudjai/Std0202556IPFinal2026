@@ -21,26 +21,11 @@ import { getBaseUrl, setCustomBaseUrl } from "../services/api";
 export default function LoginScreen() {
   const [username, setUsername] = useState("admin");
   const [password, setPassword] = useState("password123");
-  const [selectedRole, setSelectedRole] = useState("admin");
   const [showPassword, setShowPassword] = useState(false);
   const [apiUrl, setApiUrl] = useState(getBaseUrl());
   const [showApiSettings, setShowApiSettings] = useState(false);
 
   const { login, loading } = useAuth();
-
-  const handleRoleSelect = (roleKey) => {
-    setSelectedRole(roleKey);
-    if (roleKey === "admin") {
-      setUsername("admin");
-      setPassword("password123");
-    } else if (roleKey === "hr") {
-      setUsername("hr_user");
-      setPassword("hr123");
-    } else if (roleKey === "staff") {
-      setUsername("staff");
-      setPassword("staff123");
-    }
-  };
 
   const handleLogin = async () => {
     Keyboard.dismiss();
@@ -93,62 +78,8 @@ export default function LoginScreen() {
           <View style={styles.card}>
             <Text style={styles.cardHeader}>Sign In to Dashboard</Text>
             <Text style={styles.cardSub}>
-              Select role or enter credentials to continue
+              Enter administrative or staff credentials to continue
             </Text>
-
-            {/* Role Preset Selector Chips */}
-            <View style={styles.roleChipsContainer}>
-              <TouchableOpacity
-                style={[
-                  styles.roleChip,
-                  selectedRole === "admin" && styles.roleChipActive
-                ]}
-                onPress={() => handleRoleSelect("admin")}
-              >
-                <Text
-                  style={[
-                    styles.roleChipText,
-                    selectedRole === "admin" && styles.roleChipTextActive
-                  ]}
-                >
-                  Admin
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[
-                  styles.roleChip,
-                  selectedRole === "hr" && styles.roleChipActive
-                ]}
-                onPress={() => handleRoleSelect("hr")}
-              >
-                <Text
-                  style={[
-                    styles.roleChipText,
-                    selectedRole === "hr" && styles.roleChipTextActive
-                  ]}
-                >
-                  HR Manager
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[
-                  styles.roleChip,
-                  selectedRole === "staff" && styles.roleChipActive
-                ]}
-                onPress={() => handleRoleSelect("staff")}
-              >
-                <Text
-                  style={[
-                    styles.roleChipText,
-                    selectedRole === "staff" && styles.roleChipTextActive
-                  ]}
-                >
-                  Staff
-                </Text>
-              </TouchableOpacity>
-            </View>
 
             {/* Username Input */}
             <View style={styles.inputGroup}>
@@ -165,10 +96,7 @@ export default function LoginScreen() {
                   placeholder="Username"
                   placeholderTextColor={colors.textMuted}
                   value={username}
-                  onChangeText={(val) => {
-                    setUsername(val);
-                    setSelectedRole("");
-                  }}
+                  onChangeText={setUsername}
                   autoCapitalize="none"
                   autoCorrect={false}
                 />
@@ -190,10 +118,7 @@ export default function LoginScreen() {
                   placeholder="Password"
                   placeholderTextColor={colors.textMuted}
                   value={password}
-                  onChangeText={(val) => {
-                    setPassword(val);
-                    setSelectedRole("");
-                  }}
+                  onChangeText={setPassword}
                   secureTextEntry={!showPassword}
                   autoCapitalize="none"
                   autoCorrect={false}
@@ -209,17 +134,6 @@ export default function LoginScreen() {
                   />
                 </TouchableOpacity>
               </View>
-            </View>
-
-            {/* Role Permissions Hint */}
-            <View style={styles.hintBox}>
-              <Ionicons name="information-circle-outline" size={16} color={colors.primary} />
-              <Text style={styles.hintText}>
-                {selectedRole === "admin" && "Admin: Full access (CRUD, Analytics, Status Toggle)"}
-                {selectedRole === "hr" && "HR: View Salaries, Status Toggle, K-Means Analytics"}
-                {selectedRole === "staff" && "Staff: View attendance status only (Salaries hidden)"}
-                {!selectedRole && "Enter administrative or staff credentials"}
-              </Text>
             </View>
 
             {/* Login Button */}
@@ -350,37 +264,10 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.textSecondary,
     marginTop: 2,
-    marginBottom: 16
-  },
-  roleChipsContainer: {
-    flexDirection: "row",
-    gap: 8,
-    marginBottom: 18
-  },
-  roleChip: {
-    flex: 1,
-    paddingVertical: 9,
-    borderRadius: 8,
-    backgroundColor: "#F1F5F9",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "transparent"
-  },
-  roleChipActive: {
-    backgroundColor: colors.primaryLight,
-    borderColor: colors.primary
-  },
-  roleChipText: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: colors.textSecondary
-  },
-  roleChipTextActive: {
-    color: colors.primary,
-    fontWeight: "700"
+    marginBottom: 20
   },
   inputGroup: {
-    marginBottom: 14
+    marginBottom: 16
   },
   inputLabel: {
     fontSize: 13,
@@ -402,28 +289,12 @@ const styles = StyleSheet.create({
   },
   textInput: {
     flex: 1,
-    paddingVertical: 12,
+    paddingVertical: 13,
     fontSize: 14,
     color: colors.textPrimary
   },
   eyeIcon: {
     padding: 6
-  },
-  hintBox: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    backgroundColor: colors.primaryLight,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderRadius: 10,
-    marginBottom: 18
-  },
-  hintText: {
-    fontSize: 12,
-    color: colors.primaryDark,
-    flex: 1,
-    fontWeight: "500"
   },
   loginBtn: {
     flexDirection: "row",
@@ -433,6 +304,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 12,
     gap: 8,
+    marginTop: 6,
     shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,

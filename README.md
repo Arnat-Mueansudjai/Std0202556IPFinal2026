@@ -5,12 +5,14 @@
 
 ---
 
-## 📌 Project Overview
+## 1. Project Overview
 Full-stack application consisting of an **Express.js Backend** and a **React Native (Expo) Frontend** designed with modern UI/UX principles.
 
 ### Key Features
 1. **Authentication (Phase 1):**
-   - Admin Login with credentials: `admin` / `password123`
+   - Admin Login with credentials: `admin` / `password123` (Full Access)
+   - HR Login: `hr_user` / `hr123` (View Salaries, Toggle Status, K-Means Analytics)
+   - Staff Login: `staff` / `staff123` (View Attendance Status only, Salaries Masked)
    - Access token storage & route protection
 2. **Employee Management CRUD (Phase 1):**
    - View all employees with status badges (`Active` / `On Leave`)
@@ -24,9 +26,19 @@ Full-stack application consisting of an **Express.js Backend** and a **React Nat
 
 ---
 
-## 🚀 How to Run the Project
+## 2. Test User Accounts for Examiner
 
-### 1. Start Backend (Express.js)
+| Role | Username | Password | Permissions |
+| :--- | :--- | :--- | :--- |
+| **Admin** | `admin` | `password123` | Full access: CRUD, Status Toggle, Delete, K-Means Analytics |
+| **HR Manager** | `hr_user` | `hr123` | View Salaries, Status Toggle, K-Means Analytics (Delete restricted) |
+| **Staff** | `staff` | `staff123` | View Attendance status only (Salaries masked, Actions restricted) |
+
+---
+
+## 3. How to Run the Project
+
+### Start Backend (Express.js)
 ```bash
 cd backend
 npm install
@@ -35,23 +47,23 @@ npm start
 * Backend runs on: `http://localhost:5000`
 * Storage mode: In-Memory Array (with automated MySQL fallback support via `.env`)
 
-### 2. Start Frontend (React Native / Expo)
+### Start Frontend (React Native / Expo)
 ```bash
 cd frontend
 npm install
 npm run web
-# หรือรันผ่าน Metro สำหรับ Mobile / Expo Go:
+# Or run with Expo for mobile:
 # npx expo start
 ```
 * Web application available at: `http://localhost:8081`
 
 ---
 
-## 📡 API Endpoints Specification
+## 4. API Endpoints Specification
 
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
-| `POST` | `/api/login` | Authenticate admin user (`admin` / `password123`) |
+| `POST` | `/api/login` | Authenticate user (`admin`, `hr_user`, `staff`) |
 | `GET` | `/api/employees` | Retrieve all employee records |
 | `POST` | `/api/employees` | Add a new employee (`name`, `position`, `salary`) |
 | `PUT` | `/api/employees/:id/status` | Toggle employee status (`Active` ⟷ `On Leave`) |
@@ -60,10 +72,10 @@ npm run web
 
 ---
 
-## 🧪 Verification & Testing
+## 5. Verification & Testing
 An automated test script is included in the backend:
 ```bash
 cd backend
 node test-api.js
 ```
-Expected output: **9 PASSED, 0 FAILED**
+Expected output: **11 PASSED, 0 FAILED**
