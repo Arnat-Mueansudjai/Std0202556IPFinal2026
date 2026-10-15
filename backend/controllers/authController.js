@@ -1,7 +1,7 @@
 /**
  * Authentication Controller
  * Supports role-based authentication with ArMuean_User table (and In-Memory fallback).
- * Roles: admin, hr, staff
+ * Roles: admin, hr, staff (6 mock user accounts)
  * 
  * Complies strictly with Exam Requirement:
  * When credentials are admin / password123 -> returns Status 200 OK and { success: true, token: "mock-jwt-token" }
@@ -11,7 +11,7 @@ const { getDbStatus, getPool } = require("../config/db");
 
 const USER_TABLE = process.env.DB_USER_TABLE || "ArMuean_User";
 
-// In-Memory mock users fallback
+// In-Memory mock users fallback (6 accounts >= 5 required)
 const mockUsers = [
   {
     id: "1",
@@ -22,17 +22,38 @@ const mockUsers = [
   },
   {
     id: "2",
+    username: "admin2",
+    password: "admin123",
+    role: "admin",
+    name: "Deputy Administrator"
+  },
+  {
+    id: "3",
     username: "hr_user",
     password: "hr123",
     role: "hr",
     name: "HR Manager"
   },
   {
-    id: "3",
+    id: "4",
+    username: "hr_specialist",
+    password: "hr123",
+    role: "hr",
+    name: "HR Specialist"
+  },
+  {
+    id: "5",
     username: "staff",
     password: "staff123",
     role: "staff",
     name: "General Staff"
+  },
+  {
+    id: "6",
+    username: "staff_viewer",
+    password: "staff123",
+    role: "staff",
+    name: "Junior Staff"
   }
 ];
 

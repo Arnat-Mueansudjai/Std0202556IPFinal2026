@@ -26,13 +26,16 @@ Full-stack application consisting of an **Express.js Backend** and a **React Nat
 
 ---
 
-## 2. Test User Accounts for Examiner
+## 2. Test User Accounts for Examiner (6 Accounts >= 5 Required)
 
-| Role | Username | Password | Permissions |
-| :--- | :--- | :--- | :--- |
-| **Admin** | `admin` | `password123` | Full access: CRUD, Status Toggle, Delete, K-Means Analytics |
-| **HR Manager** | `hr_user` | `hr123` | View Salaries, Status Toggle, K-Means Analytics (Delete restricted) |
-| **Staff** | `staff` | `staff123` | View Attendance status only (Salaries masked, Actions restricted) |
+| Role | Username | Password | Full Name | Permissions |
+| :--- | :--- | :--- | :--- | :--- |
+| **Admin** | `admin` | `password123` | System Administrator | Full access: CRUD, Status Toggle, Delete, K-Means Analytics |
+| **Admin** | `admin2` | `admin123` | Deputy Administrator | Full administrative access |
+| **HR Manager** | `hr_user` | `hr123` | HR Manager | View Salaries, Status Toggle, K-Means Analytics (Delete restricted) |
+| **HR Specialist** | `hr_specialist` | `hr123` | HR Specialist | View Salaries, Status Toggle, K-Means Analytics |
+| **Staff** | `staff` | `staff123` | General Staff | View Attendance status only (Salaries masked, Actions restricted) |
+| **Staff** | `staff_viewer` | `staff123` | Junior Staff | View Attendance status only (Salaries masked, Actions restricted) |
 
 ---
 
@@ -63,7 +66,7 @@ npm run web
 
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
-| `POST` | `/api/login` | Authenticate user (`admin`, `hr_user`, `staff`) |
+| `POST` | `/api/login` | Authenticate user (`admin`, `hr_user`, `staff`, etc.) |
 | `GET` | `/api/employees` | Retrieve all employee records |
 | `POST` | `/api/employees` | Add a new employee (`name`, `position`, `salary`) |
 | `PUT` | `/api/employees/:id/status` | Toggle employee status (`Active` ⟷ `On Leave`) |
