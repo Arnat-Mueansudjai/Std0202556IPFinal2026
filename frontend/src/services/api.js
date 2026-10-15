@@ -1,11 +1,7 @@
 import { Platform } from "react-native";
 
-// Base API URL configuration
-export const DEFAULT_API_URL = Platform.select({
-  web: "http://localhost:5000/api",
-  android: "http://10.0.2.2:5000/api",
-  default: "http://172.20.10.3:5000/api"
-});
+// Server Backend API URL on Teacher's Server (Port 3051)
+export const DEFAULT_API_URL = "http://119.59.102.161:3051/api";
 
 let currentBaseUrl = DEFAULT_API_URL;
 
