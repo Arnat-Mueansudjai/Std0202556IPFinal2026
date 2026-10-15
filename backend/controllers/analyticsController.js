@@ -8,13 +8,15 @@ const { getEmployees } = require("../data/mockEmployees");
 const { runKMeans1D } = require("../utils/kmeans");
 const { getDbStatus, getPool } = require("../config/db");
 
+const TABLE_NAME = process.env.DB_TABLE || "ArMuean_Employees";
+
 const getSalaryClusters = async (req, res) => {
   try {
     let salaries = [];
 
     if (getDbStatus()) {
       const pool = getPool();
-      const [rows] = await pool.execute("SELECT salary FROM employees");
+      const [rows] = await pool.execute(`SELECT salary FROM ${TABLE_NAME}`);
       salaries = rows.map(r => Number(r.salary));
     } else {
       const employees = getEmployees();

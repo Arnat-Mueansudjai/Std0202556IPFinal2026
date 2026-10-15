@@ -1,6 +1,8 @@
 /**
  * Employee Controller (CRUD Operations)
  * Supports both MySQL Database and In-Memory Storage seamlessly.
+ * Table Name: ArMuean_Employees (configured via process.env.DB_TABLE)
+ * 
  * Endpoints:
  * - GET /api/employees
  * - POST /api/employees (handles 400 Bad Request if any field is empty)
@@ -11,13 +13,15 @@
 const { getEmployees, setEmployees, getNextId } = require("../data/mockEmployees");
 const { getDbStatus, getPool } = require("../config/db");
 
+const TABLE_NAME = process.env.DB_TABLE || "ArMuean_Employees";
+
 // [GET] /api/employees - Return all employee records
 const getAllEmployees = async (req, res) => {
   try {
     if (getDbStatus()) {
       const pool = getPool();
       const [rows] = await pool.execute(
-        "SELECT id, name, position, status, salary FROM employees ORDER BY id ASC"
+        `SELECT id, name, position, status, salary FROM ${TABLE_NAME} ORDER BY id ASC`
       );
       const formatted = rows.map(r => ({
         id: String(r.id),
@@ -70,7 +74,7 @@ const addEmployee = async (req, res) => {
     if (getDbStatus()) {
       const pool = getPool();
       const [result] = await pool.execute(
-        "INSERT INTO employees (name, position, status, salary) VALUES (?, ?, 'Active', ?)",
+        `INSERT INTO ${TABLE_NAME} (name, position, status, salary) VALUES (?, ?, 'Active', ?)`,
         [cleanName, cleanPosition, cleanSalary]
       );
       const newEmployee = {
@@ -109,7 +113,7 @@ const toggleEmployeeStatus = async (req, res) => {
   try {
     if (getDbStatus()) {
       const pool = getPool();
-      const [rows] = await pool.execute("SELECT * FROM employees WHERE id = ?", [id]);
+      const [rows] = await pool.execute(`SELECT * FROM ${TABLE_NAME} WHERE id = ?`, [id]);
       if (rows.length === 0) {
         return res.status(404).json({ error: "Employee not found" });
       }
@@ -117,7 +121,7 @@ const toggleEmployeeStatus = async (req, res) => {
       const currentStatus = rows[0].status;
       const newStatus = currentStatus === "Active" ? "On Leave" : "Active";
 
-      await pool.execute("UPDATE employees SET status = ? WHERE id = ?", [newStatus, id]);
+      await pool.execute(`UPDATE ${TABLE_NAME} SET status = ? WHERE id = ?`, [newStatus, id]);
 
       return res.status(200).json({
         id: String(id),
@@ -149,12 +153,12 @@ const deleteEmployee = async (req, res) => {
   try {
     if (getDbStatus()) {
       const pool = getPool();
-      const [rows] = await pool.execute("SELECT * FROM employees WHERE id = ?", [id]);
+      const [rows] = await pool.execute(`SELECT * FROM ${TABLE_NAME} WHERE id = ?`, [id]);
       if (rows.length === 0) {
         return res.status(404).json({ error: "Employee not found" });
       }
 
-      await pool.execute("DELETE FROM employees WHERE id = ?", [id]);
+      await pool.execute(`DELETE FROM ${TABLE_NAME} WHERE id = ?`, [id]);
       return res.status(200).json({
         success: true,
         message: "Employee removed successfully"
