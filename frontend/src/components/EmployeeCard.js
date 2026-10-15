@@ -4,8 +4,14 @@ import { Ionicons } from "@expo/vector-icons";
 import { colors } from "../theme/colors";
 import { useAuth } from "../context/AuthContext";
 
-export default function EmployeeCard({ employee, onToggleStatus, onDelete, isToggling }) {
-  const { isAdmin, isHr, isStaff } = useAuth();
+export default function EmployeeCard({
+  employee,
+  onToggleStatus,
+  onEdit,
+  onDelete,
+  isToggling
+}) {
+  const { isAdmin, isStaff } = useAuth();
   const isActive = employee.status === "Active";
 
   // Format currency with commas
@@ -78,7 +84,7 @@ export default function EmployeeCard({ employee, onToggleStatus, onDelete, isTog
         )}
       </View>
 
-      {/* Actions: Toggle Status (HR & Admin) & Delete (Admin Only) */}
+      {/* Actions: Toggle Status, Edit, and Delete */}
       {!isStaff && (
         <View style={styles.actionsRow}>
           {/* Toggle Status (HR & Admin) */}
@@ -90,7 +96,7 @@ export default function EmployeeCard({ employee, onToggleStatus, onDelete, isTog
           >
             <Ionicons
               name={isActive ? "pause-circle-outline" : "play-circle-outline"}
-              size={16}
+              size={15}
               color={isActive ? colors.onLeave : colors.active}
             />
             <Text
@@ -99,8 +105,18 @@ export default function EmployeeCard({ employee, onToggleStatus, onDelete, isTog
                 { color: isActive ? colors.onLeave : colors.active }
               ]}
             >
-              {isActive ? "Set to On Leave" : "Set to Active"}
+              {isActive ? "On Leave" : "Active"}
             </Text>
+          </TouchableOpacity>
+
+          {/* Edit Button (HR & Admin) */}
+          <TouchableOpacity
+            style={styles.editBtn}
+            onPress={() => onEdit(employee)}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="create-outline" size={15} color={colors.primary} />
+            <Text style={styles.editBtnText}>Edit</Text>
           </TouchableOpacity>
 
           {/* Delete Button (Admin Only) */}
@@ -110,7 +126,7 @@ export default function EmployeeCard({ employee, onToggleStatus, onDelete, isTog
               onPress={() => onDelete(employee)}
               activeOpacity={0.7}
             >
-              <Ionicons name="trash-outline" size={16} color={colors.danger} />
+              <Ionicons name="trash-outline" size={15} color={colors.danger} />
               <Text style={styles.deleteBtnText}>Delete</Text>
             </TouchableOpacity>
           )}
@@ -216,15 +232,15 @@ const styles = StyleSheet.create({
   actionsRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10
+    gap: 8
   },
   toggleBtn: {
-    flex: 1,
+    flex: 1.2,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 6,
-    paddingVertical: 9,
+    gap: 5,
+    paddingVertical: 8,
     borderRadius: 8,
     backgroundColor: "#F1F5F9"
   },
@@ -235,12 +251,32 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "600"
   },
-  deleteBtn: {
+  editBtn: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    gap: 5,
-    paddingHorizontal: 14,
-    paddingVertical: 9,
+    justifyContent: "center",
+    gap: 4,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    backgroundColor: colors.primaryLight,
+    borderWidth: 1,
+    borderColor: "#C7D2FE"
+  },
+  editBtnText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: colors.primary
+  },
+  deleteBtn: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
     borderRadius: 8,
     backgroundColor: colors.dangerBg,
     borderWidth: 1,

@@ -17,23 +17,29 @@ import { colors } from "../theme/colors";
 import Header from "../components/Header";
 import EmployeeCard from "../components/EmployeeCard";
 import AddEmployeeModal from "../components/AddEmployeeModal";
+import EditEmployeeModal from "../components/EditEmployeeModal";
 import SalaryClusterSection from "../components/SalaryClusterSection";
 import { useAuth } from "../context/AuthContext";
 import {
   getEmployeesApi,
   addEmployeeApi,
+  updateEmployeeApi,
   toggleEmployeeStatusApi,
   deleteEmployeeApi,
   getSalaryClustersApi
 } from "../services/api";
 
 export default function DashboardScreen() {
-  const { isAdmin, isHr, isStaff } = useAuth();
+  const { isAdmin, isStaff } = useAuth();
 
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [modalVisible, setModalVisible] = useState(false);
+  
+  // Modals state
+  const [addModalVisible, setAddModalVisible] = useState(false);
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [togglingId, setTogglingId] = useState(null);
 
   // Phase 2: Salary Clusters State
@@ -69,7 +75,6 @@ export default function DashboardScreen() {
     setTogglingId(id);
     try {
       const updated = await toggleEmployeeStatusApi(id);
-      // Automatically update UI state (Rubric requirement)
       setEmployees((prev) =>
         prev.map((emp) => (String(emp.id) === String(id) ? updated : emp))
       );
@@ -78,6 +83,20 @@ export default function DashboardScreen() {
     } finally {
       setTogglingId(null);
     }
+  };
+
+  // Phase 1: Edit Employee
+  const handleOpenEdit = (employee) => {
+    setSelectedEmployee(employee);
+    setEditModalVisible(true);
+  };
+
+  const handleUpdateEmployee = async (id, updatedData) => {
+    const updated = await updateEmployeeApi(id, updatedData);
+    setEmployees((prev) =>
+      prev.map((emp) => (String(emp.id) === String(id) ? updated : emp))
+    );
+    Alert.alert("Success", `${updated.name} has been updated successfully.`);
   };
 
   // Phase 1: Delete Confirmation Alert & Deletion
@@ -181,7 +200,7 @@ export default function DashboardScreen() {
           />
         )}
 
-        {/* Employees Section Title + Add Button (Add button for Admin & HR) */}
+        {/* Employees Section Title + Add Button */}
         <View style={styles.sectionHeaderRow}>
           <View>
             <Text style={styles.sectionHeading}>Employee Directory</Text>
@@ -193,7 +212,7 @@ export default function DashboardScreen() {
           {!isStaff && (
             <TouchableOpacity
               style={styles.addBtn}
-              onPress={() => setModalVisible(true)}
+              onPress={() => setAddModalVisible(true)}
               activeOpacity={0.8}
             >
               <Ionicons name="add" size={20} color="#FFFFFF" />
@@ -224,6 +243,7 @@ export default function DashboardScreen() {
               <EmployeeCard
                 employee={item}
                 onToggleStatus={handleToggleStatus}
+                onEdit={handleOpenEdit}
                 onDelete={handleDeleteEmployee}
                 isToggling={togglingId === item.id}
               />
@@ -255,9 +275,22 @@ export default function DashboardScreen() {
       {/* Add Employee Form Modal */}
       {!isStaff && (
         <AddEmployeeModal
-          visible={modalVisible}
-          onClose={() => setModalVisible(false)}
+          visible={addModalVisible}
+          onClose={() => setAddModalVisible(false)}
           onAddEmployee={handleAddEmployee}
+        />
+      )}
+
+      {/* Edit Employee Form Modal */}
+      {!isStaff && (
+        <EditEmployeeModal
+          visible={editModalVisible}
+          employee={selectedEmployee}
+          onClose={() => {
+            setEditModalVisible(false);
+            setSelectedEmployee(null);
+          }}
+          onUpdateEmployee={handleUpdateEmployee}
         />
       )}
     </SafeAreaView>

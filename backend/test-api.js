@@ -2,6 +2,7 @@
  * Backend API Verification Test Script
  * Tests all required endpoints according to the Final Exam Rubric
  * + Role-Based Access Authentication (Admin, HR, Staff)
+ * + Full Edit / Update Employee Endpoint (PUT /api/employees/:id)
  */
 
 const http = require("http");
@@ -170,7 +171,31 @@ async function runTests() {
     );
     const newEmpId = addEmp.body?.id;
 
-    // 8. PUT /api/employees/:id/status (Toggle status)
+    // 8. PUT /api/employees/:id (Full Edit / Update employee)
+    const editEmp = await request(
+      {
+        hostname: "localhost",
+        port: 5000,
+        path: `/api/employees/${newEmpId}`,
+        method: "PUT",
+        headers: { "Content-Type": "application/json" }
+      },
+      {
+        name: "Test User Updated",
+        position: "Lead QA Engineer",
+        salary: 48000,
+        status: "Active"
+      }
+    );
+    assert(
+      editEmp.status === 200 &&
+        editEmp.body?.name === "Test User Updated" &&
+        editEmp.body?.position === "Lead QA Engineer" &&
+        editEmp.body?.salary === 48000,
+      "PUT /api/employees/:id edits employee details and returns 200"
+    );
+
+    // 9. PUT /api/employees/:id/status (Toggle status)
     const toggleStatus = await request({
       hostname: "localhost",
       port: 5000,
@@ -182,7 +207,7 @@ async function runTests() {
       "PUT /api/employees/:id/status toggles status from Active to On Leave"
     );
 
-    // 9. DELETE /api/employees/:id (Remove employee)
+    // 10. DELETE /api/employees/:id (Remove employee)
     const deleteEmp = await request({
       hostname: "localhost",
       port: 5000,
@@ -194,7 +219,7 @@ async function runTests() {
       "DELETE /api/employees/:id removes employee and returns 200"
     );
 
-    // 10. GET /api/employees/salary-clusters (K-Means Analytics Phase 2)
+    // 11. GET /api/employees/salary-clusters (K-Means Analytics Phase 2)
     const clusters = await request({
       hostname: "localhost",
       port: 5000,

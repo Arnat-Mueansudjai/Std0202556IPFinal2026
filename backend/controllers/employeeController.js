@@ -6,7 +6,8 @@
  * Endpoints:
  * - GET /api/employees
  * - POST /api/employees (handles 400 Bad Request if any field is empty)
- * - PUT /api/employees/:id/status (toggle Active <-> On Leave)
+ * - PUT /api/employees/:id (update full employee details: name, position, salary, status)
+ * - PUT /api/employees/:id/status (toggle Active <-> On Leave - exam required)
  * - DELETE /api/employees/:id
  */
 
@@ -37,7 +38,6 @@ const getAllEmployees = async (req, res) => {
     return res.status(200).json(employees);
   } catch (error) {
     console.error("Error in getAllEmployees:", error);
-    // Fallback to in-memory on DB error
     return res.status(200).json(getEmployees());
   }
 };
@@ -47,7 +47,6 @@ const getAllEmployees = async (req, res) => {
 const addEmployee = async (req, res) => {
   const { name, position, salary } = req.body;
 
-  // Validation: Check for presence and non-empty values
   if (
     !name ||
     typeof name !== "string" ||
@@ -103,6 +102,74 @@ const addEmployee = async (req, res) => {
   } catch (error) {
     console.error("Error in addEmployee:", error);
     return res.status(500).json({ error: "Failed to add employee" });
+  }
+};
+
+// [PUT] /api/employees/:id - Update full employee details (Edit)
+const updateEmployee = async (req, res) => {
+  const { id } = req.params;
+  const { name, position, salary, status } = req.body;
+
+  if (
+    !name ||
+    typeof name !== "string" ||
+    name.trim() === "" ||
+    !position ||
+    typeof position !== "string" ||
+    position.trim() === "" ||
+    salary === undefined ||
+    salary === null ||
+    salary === "" ||
+    isNaN(Number(salary)) ||
+    Number(salary) < 0
+  ) {
+    return res.status(400).json({
+      error: "Name, position, and a valid positive salary are required."
+    });
+  }
+
+  const cleanName = name.trim();
+  const cleanPosition = position.trim();
+  const cleanSalary = Number(salary);
+  const cleanStatus = status === "On Leave" ? "On Leave" : "Active";
+
+  try {
+    if (getDbStatus()) {
+      const pool = getPool();
+      const [rows] = await pool.execute(`SELECT * FROM ${TABLE_NAME} WHERE id = ?`, [id]);
+      if (rows.length === 0) {
+        return res.status(404).json({ error: "Employee not found" });
+      }
+
+      await pool.execute(
+        `UPDATE ${TABLE_NAME} SET name = ?, position = ?, salary = ?, status = ? WHERE id = ?`,
+        [cleanName, cleanPosition, cleanSalary, cleanStatus, id]
+      );
+
+      return res.status(200).json({
+        id: String(id),
+        name: cleanName,
+        position: cleanPosition,
+        status: cleanStatus,
+        salary: cleanSalary
+      });
+    }
+
+    const currentList = getEmployees();
+    const employee = currentList.find(e => String(e.id) === String(id));
+    if (!employee) {
+      return res.status(404).json({ error: "Employee not found" });
+    }
+
+    employee.name = cleanName;
+    employee.position = cleanPosition;
+    employee.salary = cleanSalary;
+    employee.status = cleanStatus;
+
+    return res.status(200).json(employee);
+  } catch (error) {
+    console.error("Error in updateEmployee:", error);
+    return res.status(500).json({ error: "Failed to update employee" });
   }
 };
 
@@ -188,6 +255,7 @@ const deleteEmployee = async (req, res) => {
 module.exports = {
   getAllEmployees,
   addEmployee,
+  updateEmployee,
   toggleEmployeeStatus,
   deleteEmployee
 };
