@@ -4,3 +4,12 @@ dist/
 web-build/
 *.log
 .DS_Store
+
+# Environment Variables (Never commit sensitive credentials to GitHub)
+.env
+.env*.local
+backend/.env
+
+# Test scripts
+backend/test-*.js
+test-*.js

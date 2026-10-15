@@ -210,6 +210,7 @@ export default function DashboardScreen() {
             loading={clustersLoading}
             onAnalyze={handleAnalyzeSalary}
             hasAnalyzed={hasAnalyzed}
+            employees={employees}
           />
         )}
 
