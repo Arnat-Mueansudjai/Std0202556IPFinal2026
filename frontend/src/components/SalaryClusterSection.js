@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -15,6 +15,8 @@ export default function SalaryClusterSection({
   onAnalyze,
   hasAnalyzed
 }) {
+  const [viewMode, setViewMode] = useState("chart"); // 'cards' | 'chart'
+
   const getTierTheme = (tierName) => {
     switch (tierName) {
       case "Tier 1":
@@ -56,6 +58,14 @@ export default function SalaryClusterSection({
     }).format(val || 0);
   };
 
+  const maxCentroid = clusters && clusters.length > 0
+    ? Math.max(...clusters.map((c) => c.centroid), 1)
+    : 100000;
+
+  const totalEmployees = clusters && clusters.length > 0
+    ? clusters.reduce((sum, c) => sum + c.count, 0)
+    : 0;
+
   return (
     <View style={styles.container}>
       {/* Action Button: Analyze Salary Structure */}
@@ -73,7 +83,7 @@ export default function SalaryClusterSection({
         </TouchableOpacity>
       </View>
 
-      {/* Loading Indicator State (Meets Phase 2 requirement) */}
+      {/* Loading Indicator State */}
       {loading && (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
@@ -83,65 +93,175 @@ export default function SalaryClusterSection({
         </View>
       )}
 
-      {/* Cluster Summary Cards */}
+      {/* Cluster Analytics & Visual Graph */}
       {!loading && hasAnalyzed && clusters && clusters.length > 0 && (
         <View style={styles.resultsContainer}>
+          {/* Header with View Toggle (Cards vs Chart) */}
           <View style={styles.sectionHeader}>
             <View style={styles.sectionHeaderLeft}>
-              <Ionicons name="pie-chart" size={18} color={colors.primary} />
+              <Ionicons name="analytics-outline" size={18} color={colors.primary} />
               <Text style={styles.sectionTitle}>Salary Clusters (k = 3)</Text>
             </View>
-            <Text style={styles.sectionSubtitle}>
-              K-Means Centroid Analytics
-            </Text>
+
+            <View style={styles.viewToggleGroup}>
+              <TouchableOpacity
+                style={[styles.toggleTab, viewMode === "chart" && styles.toggleTabActive]}
+                onPress={() => setViewMode("chart")}
+              >
+                <Ionicons
+                  name="bar-chart-outline"
+                  size={14}
+                  color={viewMode === "chart" ? colors.primary : colors.textSecondary}
+                />
+                <Text style={[styles.toggleTabText, viewMode === "chart" && styles.toggleTabTextActive]}>
+                  Graph
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.toggleTab, viewMode === "cards" && styles.toggleTabActive]}
+                onPress={() => setViewMode("cards")}
+              >
+                <Ionicons
+                  name="grid-outline"
+                  size={14}
+                  color={viewMode === "cards" ? colors.primary : colors.textSecondary}
+                />
+                <Text style={[styles.toggleTabText, viewMode === "cards" && styles.toggleTabTextActive]}>
+                  Cards
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
-          <View style={styles.cardsRow}>
-            {clusters.map((cluster, index) => {
-              const theme = getTierTheme(cluster.group);
-              return (
-                <View
-                  key={index}
-                  style={[
-                    styles.clusterCard,
-                    { borderTopColor: theme.color, borderTopWidth: 4 }
-                  ]}
-                >
-                  <View style={styles.cardTop}>
+          {/* VIEW 1: VISUAL BAR CHART */}
+          {viewMode === "chart" && (
+            <View style={styles.chartContainer}>
+              {/* Overall Proportion Segment Bar */}
+              <Text style={styles.chartSubtitle}>Staff Proportion by Tier</Text>
+              <View style={styles.proportionBar}>
+                {clusters.map((cluster, idx) => {
+                  const theme = getTierTheme(cluster.group);
+                  const pct = totalEmployees > 0 ? (cluster.count / totalEmployees) * 100 : 0;
+                  if (pct === 0) return null;
+                  return (
                     <View
-                      style={[styles.tierBadge, { backgroundColor: theme.bg }]}
-                    >
-                      <Ionicons
-                        name={theme.icon}
-                        size={14}
-                        color={theme.color}
-                      />
-                      <Text
-                        style={[styles.tierBadgeText, { color: theme.color }]}
-                      >
-                        {cluster.group}
+                      key={idx}
+                      style={[
+                        styles.proportionSegment,
+                        {
+                          width: `${pct}%`,
+                          backgroundColor: theme.color
+                        }
+                      ]}
+                    />
+                  );
+                })}
+              </View>
+
+              {/* Legend Row */}
+              <View style={styles.legendRow}>
+                {clusters.map((cluster, idx) => {
+                  const theme = getTierTheme(cluster.group);
+                  const pct = totalEmployees > 0 ? Math.round((cluster.count / totalEmployees) * 100) : 0;
+                  return (
+                    <View key={idx} style={styles.legendItem}>
+                      <View style={[styles.legendDot, { backgroundColor: theme.color }]} />
+                      <Text style={styles.legendText}>
+                        {cluster.group}: {cluster.count} staff ({pct}%)
                       </Text>
                     </View>
+                  );
+                })}
+              </View>
 
-                    <View style={styles.countBadge}>
-                      <Text style={styles.countBadgeText}>
-                        {cluster.count} {cluster.count === 1 ? "Employee" : "Employees"}
+              <View style={styles.chartDivider} />
+
+              {/* Centroid Salary Bar Chart */}
+              <Text style={styles.chartSubtitle}>Average Centroid Salary Comparison</Text>
+              <View style={styles.barsList}>
+                {clusters.map((cluster, idx) => {
+                  const theme = getTierTheme(cluster.group);
+                  const barWidthPercent = Math.min(
+                    Math.max(Math.round((cluster.centroid / maxCentroid) * 100), 12),
+                    100
+                  );
+
+                  return (
+                    <View key={idx} style={styles.barItemRow}>
+                      <View style={styles.barLabelCol}>
+                        <Text style={styles.barTierTitle}>{cluster.group}</Text>
+                        <Text style={styles.barTierSub}>{theme.label}</Text>
+                      </View>
+
+                      <View style={styles.barTrackCol}>
+                        <View style={styles.barTrack}>
+                          <View
+                            style={[
+                              styles.barFill,
+                              {
+                                width: `${barWidthPercent}%`,
+                                backgroundColor: theme.color
+                              }
+                            ]}
+                          >
+                            <Text style={styles.barInsideText}>
+                              {formatCurrency(cluster.centroid)}
+                            </Text>
+                          </View>
+                        </View>
+                        <Text style={styles.barStaffCount}>
+                          {cluster.count} staff
+                        </Text>
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+            </View>
+          )}
+
+          {/* VIEW 2: SUMMARY CARDS */}
+          {viewMode === "cards" && (
+            <View style={styles.cardsRow}>
+              {clusters.map((cluster, index) => {
+                const theme = getTierTheme(cluster.group);
+                return (
+                  <View
+                    key={index}
+                    style={[
+                      styles.clusterCard,
+                      { borderTopColor: theme.color, borderTopWidth: 4 }
+                    ]}
+                  >
+                    <View style={styles.cardTop}>
+                      <View style={[styles.tierBadge, { backgroundColor: theme.bg }]}>
+                        <Ionicons name={theme.icon} size={14} color={theme.color} />
+                        <Text style={[styles.tierBadgeText, { color: theme.color }]}>
+                          {cluster.group}
+                        </Text>
+                      </View>
+
+                      <View style={styles.countBadge}>
+                        <Text style={styles.countBadgeText}>
+                          {cluster.count} {cluster.count === 1 ? "Employee" : "Employees"}
+                        </Text>
+                      </View>
+                    </View>
+
+                    <Text style={styles.tierSubLabel}>{theme.label}</Text>
+
+                    <View style={styles.centroidWrapper}>
+                      <Text style={styles.centroidLabel}>Average Base Salary:</Text>
+                      <Text style={[styles.centroidValue, { color: theme.color }]}>
+                        {formatCurrency(cluster.centroid)}
                       </Text>
                     </View>
                   </View>
-
-                  <Text style={styles.tierSubLabel}>{theme.label}</Text>
-
-                  <View style={styles.centroidWrapper}>
-                    <Text style={styles.centroidLabel}>Average Base Salary:</Text>
-                    <Text style={[styles.centroidValue, { color: theme.color }]}>
-                      {formatCurrency(cluster.centroid)}
-                    </Text>
-                  </View>
-                </View>
-              );
-            })}
-          </View>
+                );
+              })}
+            </View>
+          )}
         </View>
       )}
     </View>
@@ -227,11 +347,141 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: colors.textPrimary
   },
-  sectionSubtitle: {
+  viewToggleGroup: {
+    flexDirection: "row",
+    backgroundColor: "#F1F5F9",
+    borderRadius: 8,
+    padding: 2
+  },
+  toggleTab: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6
+  },
+  toggleTabActive: {
+    backgroundColor: "#FFFFFF",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
+    elevation: 1
+  },
+  toggleTabText: {
+    fontSize: 11,
+    color: colors.textSecondary,
+    fontWeight: "600"
+  },
+  toggleTabTextActive: {
+    color: colors.primary,
+    fontWeight: "700"
+  },
+
+  // Chart Styles
+  chartContainer: {
+    paddingVertical: 4
+  },
+  chartSubtitle: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: colors.textSecondary,
+    marginBottom: 8,
+    textTransform: "uppercase",
+    letterSpacing: 0.5
+  },
+  proportionBar: {
+    height: 14,
+    backgroundColor: "#F1F5F9",
+    borderRadius: 7,
+    flexDirection: "row",
+    overflow: "hidden",
+    marginBottom: 10
+  },
+  proportionSegment: {
+    height: "100%"
+  },
+  legendRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 12,
+    marginBottom: 14
+  },
+  legendItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5
+  },
+  legendDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4
+  },
+  legendText: {
     fontSize: 11,
     color: colors.textSecondary,
     fontWeight: "500"
   },
+  chartDivider: {
+    height: 1,
+    backgroundColor: colors.divider,
+    marginVertical: 12
+  },
+  barsList: {
+    gap: 12
+  },
+  barItemRow: {
+    flexDirection: "row",
+    alignItems: "center"
+  },
+  barLabelCol: {
+    width: 90
+  },
+  barTierTitle: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: colors.textPrimary
+  },
+  barTierSub: {
+    fontSize: 10,
+    color: colors.textMuted
+  },
+  barTrackCol: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8
+  },
+  barTrack: {
+    flex: 1,
+    height: 28,
+    backgroundColor: "#F1F5F9",
+    borderRadius: 8,
+    overflow: "hidden",
+    justifyContent: "center"
+  },
+  barFill: {
+    height: "100%",
+    borderRadius: 8,
+    justifyContent: "center",
+    paddingHorizontal: 8
+  },
+  barInsideText: {
+    color: "#FFFFFF",
+    fontSize: 11,
+    fontWeight: "800",
+    whiteSpace: "nowrap"
+  },
+  barStaffCount: {
+    fontSize: 11,
+    color: colors.textSecondary,
+    fontWeight: "600",
+    width: 48,
+    textAlign: "right"
+  },
+
+  // Cards View Styles
   cardsRow: {
     gap: 10
   },
