@@ -2,8 +2,10 @@ import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors } from "../theme/colors";
+import { useAuth } from "../context/AuthContext";
 
 export default function EmployeeCard({ employee, onToggleStatus, onDelete, isToggling }) {
+  const { isAdmin, isHr, isStaff } = useAuth();
   const isActive = employee.status === "Active";
 
   // Format currency with commas
@@ -63,44 +65,57 @@ export default function EmployeeCard({ employee, onToggleStatus, onDelete, isTog
         </View>
       </View>
 
-      {/* Salary Display */}
+      {/* Salary Display: Hidden for Staff, visible for HR and Admin */}
       <View style={styles.salarySection}>
         <Text style={styles.salaryLabel}>Base Salary:</Text>
-        <Text style={styles.salaryValue}>{formattedSalary}</Text>
+        {isStaff ? (
+          <View style={styles.maskedSalaryRow}>
+            <Ionicons name="lock-closed" size={13} color={colors.textMuted} />
+            <Text style={styles.maskedSalaryText}>Confidential (HR Only)</Text>
+          </View>
+        ) : (
+          <Text style={styles.salaryValue}>{formattedSalary}</Text>
+        )}
       </View>
 
-      {/* Actions: Toggle Status & Delete */}
-      <View style={styles.actionsRow}>
-        <TouchableOpacity
-          style={[styles.toggleBtn, isToggling && styles.disabledBtn]}
-          onPress={() => onToggleStatus(employee.id)}
-          disabled={isToggling}
-          activeOpacity={0.7}
-        >
-          <Ionicons
-            name={isActive ? "pause-circle-outline" : "play-circle-outline"}
-            size={16}
-            color={isActive ? colors.onLeave : colors.active}
-          />
-          <Text
-            style={[
-              styles.toggleBtnText,
-              { color: isActive ? colors.onLeave : colors.active }
-            ]}
+      {/* Actions: Toggle Status (HR & Admin) & Delete (Admin Only) */}
+      {!isStaff && (
+        <View style={styles.actionsRow}>
+          {/* Toggle Status (HR & Admin) */}
+          <TouchableOpacity
+            style={[styles.toggleBtn, isToggling && styles.disabledBtn]}
+            onPress={() => onToggleStatus(employee.id)}
+            disabled={isToggling}
+            activeOpacity={0.7}
           >
-            {isActive ? "Set to On Leave" : "Set to Active"}
-          </Text>
-        </TouchableOpacity>
+            <Ionicons
+              name={isActive ? "pause-circle-outline" : "play-circle-outline"}
+              size={16}
+              color={isActive ? colors.onLeave : colors.active}
+            />
+            <Text
+              style={[
+                styles.toggleBtnText,
+                { color: isActive ? colors.onLeave : colors.active }
+              ]}
+            >
+              {isActive ? "Set to On Leave" : "Set to Active"}
+            </Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.deleteBtn}
-          onPress={() => onDelete(employee)}
-          activeOpacity={0.7}
-        >
-          <Ionicons name="trash-outline" size={16} color={colors.danger} />
-          <Text style={styles.deleteBtnText}>Delete</Text>
-        </TouchableOpacity>
-      </View>
+          {/* Delete Button (Admin Only) */}
+          {isAdmin && (
+            <TouchableOpacity
+              style={styles.deleteBtn}
+              onPress={() => onDelete(employee)}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="trash-outline" size={16} color={colors.danger} />
+              <Text style={styles.deleteBtnText}>Delete</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
     </View>
   );
 }
@@ -170,7 +185,7 @@ const styles = StyleSheet.create({
   },
   salarySection: {
     flexDirection: "row",
-    alignItems: "baseline",
+    alignItems: "center",
     justifyContent: "space-between",
     backgroundColor: "#F8FAFC",
     paddingHorizontal: 12,
@@ -187,6 +202,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "700",
     color: colors.textPrimary
+  },
+  maskedSalaryRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4
+  },
+  maskedSalaryText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: colors.textMuted
   },
   actionsRow: {
     flexDirection: "row",

@@ -18,6 +18,7 @@ import Header from "../components/Header";
 import EmployeeCard from "../components/EmployeeCard";
 import AddEmployeeModal from "../components/AddEmployeeModal";
 import SalaryClusterSection from "../components/SalaryClusterSection";
+import { useAuth } from "../context/AuthContext";
 import {
   getEmployeesApi,
   addEmployeeApi,
@@ -27,6 +28,8 @@ import {
 } from "../services/api";
 
 export default function DashboardScreen() {
+  const { isAdmin, isHr, isStaff } = useAuth();
+
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -79,9 +82,13 @@ export default function DashboardScreen() {
 
   // Phase 1: Delete Confirmation Alert & Deletion
   const handleDeleteEmployee = (employee) => {
+    if (!isAdmin) {
+      Alert.alert("Permission Denied", "Only administrators can delete employee records.");
+      return;
+    }
+
     const confirmationMessage = `Are you sure you want to remove ${employee.name}?`;
 
-    // Universal confirmation dialog (Supports both Mobile Native Alert and Web window.confirm)
     if (Platform.OS === "web") {
       const confirmed = window.confirm(confirmationMessage);
       if (confirmed) {
@@ -107,7 +114,6 @@ export default function DashboardScreen() {
   const executeDelete = async (id) => {
     try {
       await deleteEmployeeApi(id);
-      // Automatically remove from state (Rubric requirement)
       setEmployees((prev) => prev.filter((emp) => String(emp.id) !== String(id)));
       Alert.alert("Success", "Employee removed successfully.");
     } catch (error) {
@@ -118,7 +124,6 @@ export default function DashboardScreen() {
   // Phase 1: Add New Employee
   const handleAddEmployee = async (newEmployeeData) => {
     const created = await addEmployeeApi(newEmployeeData);
-    // Automatically add to state (Rubric requirement)
     setEmployees((prev) => [...prev, created]);
     Alert.alert("Success", `${created.name} has been added successfully.`);
   };
@@ -166,29 +171,35 @@ export default function DashboardScreen() {
           </View>
         </View>
 
-        {/* Phase 2: K-Means Salary Analytics Section */}
-        <SalaryClusterSection
-          clusters={clusters}
-          loading={clustersLoading}
-          onAnalyze={handleAnalyzeSalary}
-          hasAnalyzed={hasAnalyzed}
-        />
+        {/* Phase 2: K-Means Salary Analytics Section (Visible for HR & Admin) */}
+        {!isStaff && (
+          <SalaryClusterSection
+            clusters={clusters}
+            loading={clustersLoading}
+            onAnalyze={handleAnalyzeSalary}
+            hasAnalyzed={hasAnalyzed}
+          />
+        )}
 
-        {/* Employees Section Title + Add Button */}
+        {/* Employees Section Title + Add Button (Add button for Admin & HR) */}
         <View style={styles.sectionHeaderRow}>
           <View>
             <Text style={styles.sectionHeading}>Employee Directory</Text>
-            <Text style={styles.sectionSubheading}>Manage active & on-leave records</Text>
+            <Text style={styles.sectionSubheading}>
+              {isStaff ? "Attendance status overview" : "Manage active and on-leave records"}
+            </Text>
           </View>
 
-          <TouchableOpacity
-            style={styles.addBtn}
-            onPress={() => setModalVisible(true)}
-            activeOpacity={0.8}
-          >
-            <Ionicons name="add" size={20} color="#FFFFFF" />
-            <Text style={styles.addBtnText}>Add Employee</Text>
-          </TouchableOpacity>
+          {!isStaff && (
+            <TouchableOpacity
+              style={styles.addBtn}
+              onPress={() => setModalVisible(true)}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="add" size={20} color="#FFFFFF" />
+              <Text style={styles.addBtnText}>Add Employee</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
     );
@@ -223,7 +234,9 @@ export default function DashboardScreen() {
                 <Ionicons name="folder-open-outline" size={48} color={colors.textMuted} />
                 <Text style={styles.emptyTitle}>No Employees Found</Text>
                 <Text style={styles.emptySubtitle}>
-                  Click the "+ Add Employee" button above to add the first record.
+                  {isStaff
+                    ? "No employee records currently available."
+                    : "Click the + Add Employee button above to add the first record."}
                 </Text>
               </View>
             }
@@ -240,11 +253,13 @@ export default function DashboardScreen() {
       </View>
 
       {/* Add Employee Form Modal */}
-      <AddEmployeeModal
-        visible={modalVisible}
-        onClose={() => setModalVisible(false)}
-        onAddEmployee={handleAddEmployee}
-      />
+      {!isStaff && (
+        <AddEmployeeModal
+          visible={modalVisible}
+          onClose={() => setModalVisible(false)}
+          onAddEmployee={handleAddEmployee}
+        />
+      )}
     </SafeAreaView>
   );
 }

@@ -1,6 +1,7 @@
 /**
  * Backend API Verification Test Script
  * Tests all required endpoints according to the Final Exam Rubric
+ * + Role-Based Access Authentication (Admin, HR, Staff)
  */
 
 const http = require("http");
@@ -43,7 +44,7 @@ async function runTests() {
   }
 
   try {
-    // 1. POST /api/login (Valid)
+    // 1. POST /api/login (Valid Admin - Exam requirement)
     const validLogin = await request(
       {
         hostname: "localhost",
@@ -55,11 +56,45 @@ async function runTests() {
       { username: "admin", password: "password123" }
     );
     assert(
-      validLogin.status === 200 && validLogin.body?.token === "mock-jwt-token",
-      "POST /api/login with valid credentials returns 200 & mock-jwt-token"
+      validLogin.status === 200 &&
+        validLogin.body?.token === "mock-jwt-token" &&
+        validLogin.body?.user?.role === "admin",
+      "POST /api/login with admin/password123 returns 200 & mock-jwt-token (Role: admin)"
     );
 
-    // 2. POST /api/login (Invalid)
+    // 2. POST /api/login (HR Role)
+    const hrLogin = await request(
+      {
+        hostname: "localhost",
+        port: 5000,
+        path: "/api/login",
+        method: "POST",
+        headers: { "Content-Type": "application/json" }
+      },
+      { username: "hr_user", password: "hr123" }
+    );
+    assert(
+      hrLogin.status === 200 && hrLogin.body?.user?.role === "hr",
+      "POST /api/login with hr_user/hr123 returns 200 (Role: hr)"
+    );
+
+    // 3. POST /api/login (Staff Role)
+    const staffLogin = await request(
+      {
+        hostname: "localhost",
+        port: 5000,
+        path: "/api/login",
+        method: "POST",
+        headers: { "Content-Type": "application/json" }
+      },
+      { username: "staff", password: "staff123" }
+    );
+    assert(
+      staffLogin.status === 200 && staffLogin.body?.user?.role === "staff",
+      "POST /api/login with staff/staff123 returns 200 (Role: staff)"
+    );
+
+    // 4. POST /api/login (Invalid)
     const invalidLogin = await request(
       {
         hostname: "localhost",
@@ -75,7 +110,7 @@ async function runTests() {
       "POST /api/login with invalid credentials returns 401 Unauthorized"
     );
 
-    // 3. GET /api/employees
+    // 5. GET /api/employees
     const getEmps = await request({
       hostname: "localhost",
       port: 5000,
@@ -99,7 +134,7 @@ async function runTests() {
       "Employee schema matches: { id, name, position, status, salary }"
     );
 
-    // 4. POST /api/employees (Bad Request with missing fields)
+    // 6. POST /api/employees (Bad Request with missing fields)
     const badEmp = await request(
       {
         hostname: "localhost",
@@ -115,7 +150,7 @@ async function runTests() {
       "POST /api/employees with missing fields returns 400 Bad Request"
     );
 
-    // 5. POST /api/employees (Valid new employee)
+    // 7. POST /api/employees (Valid new employee)
     const addEmp = await request(
       {
         hostname: "localhost",
@@ -135,7 +170,7 @@ async function runTests() {
     );
     const newEmpId = addEmp.body?.id;
 
-    // 6. PUT /api/employees/:id/status (Toggle status)
+    // 8. PUT /api/employees/:id/status (Toggle status)
     const toggleStatus = await request({
       hostname: "localhost",
       port: 5000,
@@ -147,7 +182,7 @@ async function runTests() {
       "PUT /api/employees/:id/status toggles status from Active to On Leave"
     );
 
-    // 7. DELETE /api/employees/:id (Remove employee)
+    // 9. DELETE /api/employees/:id (Remove employee)
     const deleteEmp = await request({
       hostname: "localhost",
       port: 5000,
@@ -159,7 +194,7 @@ async function runTests() {
       "DELETE /api/employees/:id removes employee and returns 200"
     );
 
-    // 8. GET /api/employees/salary-clusters (K-Means Analytics Phase 2)
+    // 10. GET /api/employees/salary-clusters (K-Means Analytics Phase 2)
     const clusters = await request({
       hostname: "localhost",
       port: 5000,
@@ -173,8 +208,6 @@ async function runTests() {
         clusters.body?.clusters.length === 3,
       "GET /api/employees/salary-clusters returns 200 and 3 Tier clusters"
     );
-
-    console.log("\nK-Means Cluster Output Preview:", JSON.stringify(clusters.body?.clusters, null, 2));
 
     console.log(`\n=== RESULTS: ${passed} PASSED, ${failed} FAILED ===`);
     process.exit(failed > 0 ? 1 : 0);

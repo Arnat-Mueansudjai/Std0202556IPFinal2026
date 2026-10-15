@@ -5,7 +5,33 @@ import { colors } from "../theme/colors";
 import { useAuth } from "../context/AuthContext";
 
 export default function Header() {
-  const { user, logout } = useAuth();
+  const { user, role, logout } = useAuth();
+
+  const getRoleLabel = () => {
+    switch (role) {
+      case "admin":
+        return "Admin";
+      case "hr":
+        return "HR Manager";
+      case "staff":
+        return "Staff";
+      default:
+        return "User";
+    }
+  };
+
+  const getRoleColor = () => {
+    switch (role) {
+      case "admin":
+        return colors.primary;
+      case "hr":
+        return "#0284C7"; // Light Blue
+      case "staff":
+        return colors.textSecondary;
+      default:
+        return colors.primary;
+    }
+  };
 
   return (
     <View style={styles.headerContainer}>
@@ -14,8 +40,17 @@ export default function Header() {
           <Ionicons name="people" size={22} color={colors.primary} />
         </View>
         <View>
-          <Text style={styles.appName}>HR Manager & Analytics</Text>
-          <Text style={styles.studentId}>Std6730202556 • Final 2026</Text>
+          <View style={styles.nameRow}>
+            <Text style={styles.appName}>HR Analytics System</Text>
+            <View style={[styles.roleBadge, { borderColor: getRoleColor() }]}>
+              <Text style={[styles.roleText, { color: getRoleColor() }]}>
+                {getRoleLabel()}
+              </Text>
+            </View>
+          </View>
+          <Text style={styles.studentId}>
+            User: {user?.name || user?.username || "Admin"} • ID: 6730202556
+          </Text>
         </View>
       </View>
 
@@ -60,11 +95,28 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center"
   },
+  nameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8
+  },
   appName: {
     fontSize: 16,
     fontWeight: "700",
     color: colors.textPrimary,
     letterSpacing: -0.3
+  },
+  roleBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+    borderWidth: 1,
+    backgroundColor: "#F8FAFC"
+  },
+  roleText: {
+    fontSize: 10,
+    fontWeight: "700",
+    textTransform: "uppercase"
   },
   studentId: {
     fontSize: 12,

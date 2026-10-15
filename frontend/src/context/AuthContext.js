@@ -5,7 +5,7 @@ const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(null);
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(null); // { username, role: 'admin' | 'hr' | 'staff', name }
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -17,7 +17,15 @@ export const AuthProvider = ({ children }) => {
       const data = await loginApi(username, password);
       if (data && data.token) {
         setToken(data.token);
-        setUser({ username });
+        // Extract user and role from response (default to admin for admin credentials)
+        const userRole = data.user?.role || (username === "admin" ? "admin" : "staff");
+        const userName = data.user?.name || (username === "admin" ? "System Administrator" : username);
+        
+        setUser({
+          username,
+          role: userRole,
+          name: userName
+        });
         setLoading(false);
         return { success: true };
       } else {
@@ -43,6 +51,10 @@ export const AuthProvider = ({ children }) => {
         isAuthenticated: !!token,
         token,
         user,
+        role: user?.role || "staff",
+        isAdmin: user?.role === "admin",
+        isHr: user?.role === "hr" || user?.role === "admin",
+        isStaff: user?.role === "staff",
         loading,
         error,
         login,
